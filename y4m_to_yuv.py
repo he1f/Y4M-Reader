@@ -7,6 +7,8 @@ if __name__ == '__main__':
 		err, nframes = 0, 0
 		while not err:
 			(err, frame) = reader.get_next_frame()
-			nframes += 1
+			print 'Err:', err, ' -- frame_size:', len(frame)
+			if not err:
+				nframes += 1
 
 		print 'nframes:', nframes

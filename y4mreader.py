@@ -95,6 +95,9 @@ class Y4MReader():
 			return (3, '')
 
 		data = self.in_file.read(6)
+		if len(data) < 6:
+			return (4, '')
+
 		if data != "FRAME\n":
 			return (2, '')
 
@@ -102,7 +105,11 @@ class Y4MReader():
 			size = self.width * self.height * 3 / 2
 		frame_data = self.in_file.read(size)
 
-		return (0, frame_data)
+		err = 0
+		if len(frame_data) < size:
+			err = 5
+
+		return (err, frame_data)
 
 	def get_width(self):
 		if not self.init_ok:
