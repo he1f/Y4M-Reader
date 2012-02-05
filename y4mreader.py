@@ -1,3 +1,8 @@
+""" y4mreader - class to read YUV4MPEG2 file format
+
+Author:
+ Andrey Maslennikov <andrew.maslennikov@gmail.com>
+"""
 class Y4MReader():
 	def __init__(self):
 		self.init_ok = False
@@ -23,11 +28,10 @@ class Y4MReader():
 
 	def _next(self, num):
 		val = self.in_file.read(num)
-		self.in_file.seek(-1 * num, 1)	# back to NUM symbols from current position
+		self.in_file.seek(-1 * num, 1)	# to NUM symbols back from current position
 		return str(val)
 
 	def init(self, filename):
-		#print 'Start init(' + filename + ')'
 		try:
 			self.in_file = open(filename, 'rb')
 		except IOError, e:
@@ -132,11 +136,3 @@ class Y4MReader():
 		if init_ok == False:
 			return 0
 		return self.comment
-
-
-if __name__ == '__main__':
-	reader = Y4MReader()
-	err = reader.init('akiyo_qcif.y4m')
-	if not err:
-		(err, frame) = reader.get_next_frame()
-		print frame
