@@ -12,20 +12,24 @@ class Y4MReader():
 	def _get_value(self):
 		val = ''
 		tmp = str(self.in_file.read(1))
-		while tmp != ' ':
+		while tmp != ' ' and tmp != "\n":
 			val += str(tmp)
 			tmp = self.in_file.read(1)
-		print 'val =', str(val)
 		return str(val)
+
+	def _set_default_values(self):
+		if not self.color_space:
+			self.color_space = '420'
 
 	def _next(self, num):
 		val = self.in_file.read(num)
 		self.in_file.seek(-1 * num, 1)	# back to NUM symbols from current position
-		return val
+		return str(val)
 
 	def init(self, filename):
+		#print 'Start init(' + filename + ')'
 		try:
-			self.in_file = open(filename)
+			self.in_file = open(filename, 'rb')
 		except IOError, e:
 			init_ok = False
 			print 'Cannot open file `' + filename + '\': ' + str(e)
@@ -37,27 +41,15 @@ class Y4MReader():
 			init_ok = False
 			return 2
 
-		# reading W, H is that order...
-		# W first...
-		data = self.in_file.read(1)
-		if data == 'W':
-			self.width = self._get_value()
-		else:
-			init_ok = False
-			return 2
-
-		# ... than H
-		data = self.in_file.read(1)
-		if data == 'H':
-			self.height = self._get_value()
-		else:
-			init_ok = False
-			return 2
-
 		init_ok = True
+
 		while self._next(5) != 'FRAME':
 			data = self.in_file.read(1)
-			if data == 'F':	# framerate
+			if data == 'W':
+				self.width = int(self._get_value())
+			elif data == 'H':
+				self.height = int(self._get_value())
+			elif data == 'F':	# framerate
 				data = self._get_value()
 				numerator, denominator = data.split(':')
 				self.framerate = float(numerator) / float(denominator)
@@ -80,7 +72,10 @@ class Y4MReader():
 					init_ok = False
 					return 2
 			else:
+				print 'Unknown parameter: `' + data + '\''
 				break
+
+		self._set_default_values()
 
 		print 'width        =', self.width
 		print 'height       =', self.height
@@ -92,7 +87,16 @@ class Y4MReader():
 		return 0
 
 	def get_next_frame(self):
-		return 0
+		data = self.in_file.read(6)
+		if data != "FRAME\n":
+			return (2, '')
+
+
+		if (self.color_space == '420'):
+			size = self.width * self.height * 3 / 2
+		frame_data = self.in_file.read(size)
+
+		return (0, frame_data)
 
 	def get_width(self):
 		if init_ok == False:
@@ -133,3 +137,6 @@ class Y4MReader():
 if __name__ == '__main__':
 	reader = Y4MReader()
 	err = reader.init('akiyo_qcif.y4m')
+	if not err:
+		(err, frame) = reader.get_next_frame()
+		print frame
