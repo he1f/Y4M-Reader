@@ -45,7 +45,7 @@ class Y4MReader():
 			init_ok = False
 			return 2
 
-		init_ok = True
+		self.init_ok = True
 
 		while self._next(5) != 'FRAME':
 			data = self.in_file.read(1)
@@ -73,7 +73,7 @@ class Y4MReader():
 				self.color_space = self._get_value()
 				# only 4:2:0 for now
 				if self.color_space != '420':
-					init_ok = False
+					self.init_ok = False
 					return 2
 			else:
 				print 'Unknown parameter: `' + data + '\''
@@ -91,10 +91,12 @@ class Y4MReader():
 		return 0
 
 	def get_next_frame(self):
+		if not self.init_ok:
+			return (3, '')
+
 		data = self.in_file.read(6)
 		if data != "FRAME\n":
 			return (2, '')
-
 
 		if (self.color_space == '420'):
 			size = self.width * self.height * 3 / 2
@@ -103,36 +105,36 @@ class Y4MReader():
 		return (0, frame_data)
 
 	def get_width(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.width
 
 	def get_height(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.height
 
 	def get_framerate(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.framerate
 
 	def get_aspect_ratio(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.aspect_ratio
 
 	def get_scan_type(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.scan_type
 
 	def get_colour_space(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.color_space
 
 	def get_comment(self):
-		if init_ok == False:
-			return 0
+		if not self.init_ok:
+			return 3
 		return self.comment
