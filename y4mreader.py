@@ -79,6 +79,11 @@ class Y4MReader():
 				print 'Unknown parameter: `' + data + '\''
 				break
 
+		# check mandatory parameters
+		if not self.width or not self.height or not self.framerate:
+			self.init_ok = False
+			return 2
+
 		self._set_default_values()
 
 		print 'width        =', self.width
@@ -98,6 +103,7 @@ class Y4MReader():
 		if len(data) < 6:
 			return (4, '')
 
+		# TODO: implement parameters support in frame
 		if data != "FRAME\n":
 			return (2, '')
 
