@@ -3,19 +3,25 @@ class Y4MReader():
 		self.init_ok = False
 		self.in_file = file
 		self.width, self.height = 0, 0
-		self.framerate = 0
-		self.aspect_ratio = 0
-		self.color_space = ''
-		self.scan_type = ''
-		self.comment = ''
+		self.framerate    = 0.0
+		self.aspect_ratio = 0.0
+		self.color_space  = ''
+		self.scan_type    = ''
+		self.comment      = ''
 
 	def _get_value(self):
 		val = ''
-		tmp = self.in_file.read(1)
+		tmp = str(self.in_file.read(1))
 		while tmp != ' ':
 			val += str(tmp)
 			tmp = self.in_file.read(1)
-		print 'val =', val
+		print 'val =', str(val)
+		return str(val)
+
+	def _next(self, num):
+		val = self.in_file.read(num)
+		self.in_file.seek(-1 * num, 1)	# back to NUM symbols from current position
+		return val
 
 	def init(self, filename):
 		try:
@@ -26,7 +32,7 @@ class Y4MReader():
 			return 1
 
 		# check format
-		data = self.in_file.read(10)	#	YUV4MPEG2 + " "
+		data = self.in_file.read(10)	# YUV4MPEG2 + " "
 		if data != 'YUV4MPEG2 ':
 			init_ok = False
 			return 2
@@ -48,9 +54,40 @@ class Y4MReader():
 			init_ok = False
 			return 2
 
-		print 'width  =', self.width
-		print 'height =', self.height
 		init_ok = True
+		while self._next(5) != 'FRAME':
+			data = self.in_file.read(1)
+			if data == 'F':	# framerate
+				data = self._get_value()
+				numerator, denominator = data.split(':')
+				self.framerate = float(numerator) / float(denominator)
+			elif data == 'I':	# scan type
+				data = self._get_value()
+				if data == 'p':
+					self.scan_type = 'progressive'
+				elif data == 't':
+					self.scan_type = 'tff'
+				elif data == 'b':
+					self.scan_type = 'bff'
+				else:
+					self.scan_type = 'mixed'
+			elif data == 'A':	# aspect ratio
+				self.aspect_ratio = self._get_value()
+			elif data == 'C':	# color space
+				self.color_space = self._get_value()
+				# only 4:2:0 for now
+				if self.color_space != '420':
+					init_ok = False
+					return 2
+			else:
+				break
+
+		print 'width        =', self.width
+		print 'height       =', self.height
+		print 'framerate    =', self.framerate
+		print 'scan_type    =', self.scan_type
+		print 'aspect_ratio =', self.aspect_ratio
+		print 'color_space  =', self.color_space
 
 		return 0
 
@@ -92,8 +129,6 @@ class Y4MReader():
 			return 0
 		return self.comment
 
-	def get_frame(self, index):
-		return 0
 
 if __name__ == '__main__':
 	reader = Y4MReader()
